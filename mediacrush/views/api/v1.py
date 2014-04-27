@@ -93,11 +93,10 @@ def _upload_object(result, status):
 
         return resp, status
 
-class APIView(FlaskView):
+class APIv1(FlaskView):
     decorators = [json_output, cors]
-    route_base = '/'
 
-    @route("/api/album/create", methods=['POST'])
+    @route("/album/create", methods=['POST'])
     def album(self):
         items = request.form['list'].split(",")
 
@@ -118,8 +117,7 @@ class APIView(FlaskView):
 
         return {"hash": a.hash}
 
-    @route("/api/<id>")
-    @route("/<id>.json")
+    @route("/<id>")
     def get(self, id):
         klass = RedisObject.klass(id)
 
@@ -129,7 +127,7 @@ class APIView(FlaskView):
         o = klass.from_hash(id)
         return objects[klass](o)
 
-    @route("/api/<h>", methods=['DELETE'])
+    @route("/<h>", methods=['DELETE'])
     def delete(self, h):
         klass = RedisObject.klass(h)
 
@@ -145,13 +143,13 @@ class APIView(FlaskView):
         deletion_procedures[klass](o)
         return {'status': 'success'}
 
-    @route("/api/<h>/delete")
+    @route("/<h>/delete")
     def delete_human(self, h):
         # TODO(jdiez): remove this when it's safe to do so
         return redirect('/%s/delete' % h)
 
 
-    @route("/api/info")
+    @route("/info")
     def info(self):
         if not "list" in request.args:
             return {'error': 400}, 400
@@ -168,7 +166,7 @@ class APIView(FlaskView):
 
         return res
 
-    @route("/api/upload/noscript", methods=['POST'])
+    @route("/upload/noscript", methods=['POST'])
     def upload_noscript(self):
         f = request.files['file']
         filename = ''.join(c for c in f.filename if c.isalnum() or c == '.')
@@ -178,14 +176,14 @@ class APIView(FlaskView):
             return { 'error': code }, code
         return tor_redirect("/status/" + identifier)
 
-    @route("/api/upload/file", methods=['POST'])
+    @route("/upload/file", methods=['POST'])
     def upload_file(self):
         f = request.files['file']
         filename = ''.join(c for c in f.filename if c.isalnum() or c == '.')
 
         return _upload_object(*upload(f, filename))
 
-    @route("/api/upload/url", methods=['POST'])
+    @route("/upload/url", methods=['POST'])
     def upload_url(self):
         url = request.form['url']
         f = URLFile()
@@ -206,7 +204,7 @@ class APIView(FlaskView):
 
         return _upload_object(result, status)
 
-    @route("/api/url/info", methods=['POST'])
+    @route("/url/info", methods=['POST'])
     def urlinfo(self):
         l = request.form['list']
         items = l.split(",") if "," in l else [l]
@@ -227,7 +225,7 @@ class APIView(FlaskView):
 
         return result
 
-    @route("/api/<h>/status")
+    @route("/<h>/status")
     def status(self, h):
         klass = RedisObject.klass(h)
 
@@ -249,7 +247,7 @@ class APIView(FlaskView):
 
         return ret
 
-    @route("/api/status")
+    @route("/status")
     def status_bulk(self):
         if not "list" in request.args:
             return {'error': 400}, 400
@@ -268,14 +266,14 @@ class APIView(FlaskView):
 
         return res
 
-    @route("/api/<h>/exists")
+    @route("/<h>/exists")
     def exists(self, h):
         if not File.exists(h):
             return {'exists': False}, 404
 
         return {'exists': True}
 
-    @route("/api/<h>/flags")
+    @route("/<h>/flags")
     def flags(self, h):
         if not File.exists(h):
             return {'error': 404}, 404
@@ -283,7 +281,7 @@ class APIView(FlaskView):
         f = File.from_hash(h)
         return {'flags': f.flags.as_dict()}
 
-    @route("/api/<h>/flags", methods=['POST'])
+    @route("/<h>/flags", methods=['POST'])
     def flags_post(self, h):
         klass = RedisObject.klass(h)
 
@@ -310,7 +308,7 @@ class APIView(FlaskView):
         return {"flags": o.flags.as_dict()}
 
 
-    @route("/api/feedback", methods=['POST'])
+    @route("/feedback", methods=['POST'])
     def feedback(self):
         text = request.form.get('feedback')
         useragent = request.headers.get('User-Agent')
